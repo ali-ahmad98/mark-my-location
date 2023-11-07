@@ -2,6 +2,7 @@ import { useState } from "react";
 import { GoogleMap, Marker, useLoadScript } from "@react-google-maps/api";
 
 import { addDocument } from "../util/apiServices";
+import toaster from "./Toast";
 
 const MapComponent = () => {
   const { isLoaded } = useLoadScript({
@@ -20,7 +21,7 @@ const MapComponent = () => {
     lng: 74.3587,
   };
 
-  const handleMapClick = (e) => {
+  const handleMapClick = async (e) => {
     const lat = e.latLng.lat();
     const lng = e.latLng.lng();
     const newMarker = {
@@ -30,8 +31,15 @@ const MapComponent = () => {
         lng,
       },
     };
-    addDocument("maplocations", { location: newMarker.location });
+
     setMarkers((prevMarkers) => [...prevMarkers, newMarker]);
+
+    try {
+      await addDocument("maplocations", { location: newMarker.location });
+      toaster.success("Location saved successfully");
+    } catch (error) {
+      toaster.error("Something Went Wrong!!!");
+    }
   };
 
   return (
@@ -41,7 +49,8 @@ const MapComponent = () => {
           mapContainerStyle={containerStyle}
           center={center}
           zoom={10}
-          onClick={handleMapClick}>
+          onClick={handleMapClick}
+        >
           {markers.map(({ id, location }) => (
             <Marker key={id} position={location} label={id.toString()} />
           ))}
